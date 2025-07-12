@@ -168,12 +168,12 @@ class MyQuery
         return $this->CONNECTED;
     }
 
-    function update($data, $ByKey = "id", $WherePlus = "")
+    function update($data = FALSE, $ByKey = "id", $WherePlus = "")
     {
         return $this->updatePDO($data, $ByKey, $WherePlus);
     }
 
-    function insert($values = array(), $table = false)
+    function insert($values = FALSE, $table = false)
     {
         $this->insertPDO($values, $table);
     }
@@ -636,7 +636,7 @@ class MyQuery
     function SelectAll($table = false, $keys = "*", $plus = "LIMIT 500")
     {
         if ($table = $this->getTable($table)) {
-            $query = sprintf('SELECT %s FROM `%s` %s %s', $keys, $table, $plus);
+            $query = sprintf('SELECT %s FROM `%s` %s', $keys, $table, $plus);
             return $this->runPDO($query, FALSE, $table, 'SELECT');
         }
 
