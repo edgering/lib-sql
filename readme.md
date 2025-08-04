@@ -45,14 +45,14 @@ foreach ($_SQL->runPDO() as $row) {
 
 ```php
 
-    $row = $_SQL->GetRow("SELECT * FROM `users` WHERE `id` = 1 LIMIT 1");
+$row = $_SQL->GetRow("SELECT * FROM `users` WHERE `id` = 1 LIMIT 1");
 
-    // -- select all records
+// -- select all records
 
-    $_SQL->table = "users";
-    $_SQL->fetchArray();
+$_SQL->table = "users";
+$_SQL->fetchArray();
     
-    $result = $_SQL->SelectAll();
+$result = $_SQL->SelectAll();
 
 ```
 
