@@ -43,6 +43,8 @@ foreach ($_SQL->runPDO() as $row) {
 
 ### Select
 
+```php
+
     $row = $_SQL->GetRow("SELECT * FROM `users` WHERE `id` = 1 LIMIT 1");
 
     // -- select all records
@@ -51,6 +53,8 @@ foreach ($_SQL->runPDO() as $row) {
     $_SQL->fetchArray();
     
     $result = $_SQL->SelectAll();
+
+```
 
 ### Inserting and updating data
 
