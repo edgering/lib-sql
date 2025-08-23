@@ -184,7 +184,7 @@ class MyQuery
 
     function insert($values = FALSE, $table = false)
     {
-        $this->insertPDO($values, $table);
+        return $this->insertPDO($values, $table);
     }
 
     function result($query = FALSE, $values = FALSE, $command = FALSE)
