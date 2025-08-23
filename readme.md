@@ -1,6 +1,6 @@
-# SQL global class
+# GLOBAL SQL CLASS PHP Library
 
-This class provides a global SQL interface for executing queries and managing common queries by misc shortcuts.
+A PHP library providing a global SQL interface for executing queries and managing common queries by misc shortcuts.
 
 It is designed to simplify database interactions in PHP applications, allowing for easy connection management, query execution, and data manipulation.
 
@@ -43,14 +43,17 @@ foreach ($_SQL->runPDO() as $row) {
 
 ### Select
 
-    $row = $_SQL->GetRow("SELECT * FROM `users` WHERE `id` = 1 LIMIT 1");
+```php
 
-    // -- select all records
+$row = $_SQL->GetRow("SELECT * FROM `users` WHERE `id` = 1 LIMIT 1");
 
-    $_SQL->table = "users";
-    $_SQL->fetchArray();
+// -- select all records
+
+$_SQL->table = "users";
+$_SQL->fetchArray();
     
-    $result = $_SQL->SelectAll();
+$result = $_SQL->SelectAll();
+```
 
 ### Inserting and updating data
 

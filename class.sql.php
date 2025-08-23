@@ -1,5 +1,11 @@
 <?php
 
+// Include SqlFormatter if available
+
+if (file_exists(__DIR__ . "/SqlFormatter.php")) {
+    require_once __DIR__ . "/SqlFormatter.php";
+}
+
 /**
  *  EDGERING SQL CLASS 
  *
@@ -8,8 +14,6 @@
  *  - set LogDir to FALSE to not create log files
  */
 
-require_once __DIR__ . "/SqlFormatter.php";
-
 class MyQuery
 {
     var $PDO;
@@ -17,7 +21,7 @@ class MyQuery
     var $CONNECTED = FALSE;
     var $PDOEXISTS = FALSE;
 
-    var $table = false;
+    var $table = FALSE;
 
     var $NumRows = 0;
 
@@ -35,6 +39,9 @@ class MyQuery
     var $fetchMode = 5; // PDO::FETCH_OBJ
     var $timestamp = 0;
 
+    var $QueryFormatter = FALSE;
+    var $error = FALSE; // proxy 
+
     /**
      *  Constructor 
      *  
@@ -42,6 +49,8 @@ class MyQuery
 
     function __construct($autoConnect = TRUE)
     {
+        $this->QueryFormatter = class_exists('SqlFormatter');
+
         if ($autoConnect && defined("SQL") && defined("DB")) {
             return $this->connect(SQL, DB, USER, PASS);
         }
@@ -469,11 +478,22 @@ class MyQuery
         try {
 
             $sth = $this->PDO->prepare($this->qry);
+
+            if ($sth === false) {
+
+                $errorInfo = $this->PDO->errorInfo();
+
+                $this->error("SQL Prepare Error: " . (isset($errorInfo[2]) ? $errorInfo[2] : 'Unknown error'));
+                $this->log();
+
+                return $this->emptyResult($command);
+            }
+
             $sth->execute($this->VALUES);
 
             $tmp = $sth->errorInfo();
 
-            if (!preg_match("/^([0]+)$/", $tmp[0])) {
+            if ($sth !== false && $tmp[0] !== '00000') {
 
                 $this->error("SQL Error: " . $tmp[2]);
                 $this->log();
@@ -494,12 +514,14 @@ class MyQuery
 
         if ($command === 'SELECT' || $command === 'SHOW' || $command === 'DESCRIBE') {
             $result = $sth->fetchAll($this->fetchMode);
+
             return $result !== false ? $result : array();
         }
 
         // For UPDATE and DELETE, return the number of affected rows.
 
         if ($command === 'UPDATE' || $command === 'DELETE') {
+
             return $this->NumRows;
         }
 
@@ -519,11 +541,7 @@ class MyQuery
                 return $row;
             }
 
-            if ($this->fetchMode === PDO::FETCH_OBJ) {
-                return new stdClass();
-            }
-
-            return array();
+            return $this->emptyResult($command);
         }
 
         return $this->error("Unknown command: {$command} in query: {$this->qry}");
@@ -538,15 +556,15 @@ class MyQuery
 
     function emptyResult($command = 'SELECT')
     {
-        $result = array();
-
         if ($command === 'SELECT ROW' && $this->fetchMode === PDO::FETCH_OBJ) {
-            $result = new stdClass();
-        } else if ($command === 'INSERT' || $command === 'UPDATE' || $command === 'DELETE') {
-            $result = 0;
+            return new stdClass();
         }
 
-        return $result;
+        if ($command === 'INSERT' || $command === 'UPDATE' || $command === 'DELETE') {
+            return 0;
+        }
+
+        return array();
     }
 
     /**
@@ -683,12 +701,8 @@ class MyQuery
 
     function showLastQuery($hidden = FALSE, $query = NULL)
     {
-        if ($query === NULL) {
-            $query = $this->qry;
-        }
-
         if (!$hidden) {
-            $query = SqlFormatter::format($query);
+            $query = $this->formatSql($query);
         }
 
         $this->echo($query, $hidden);
@@ -762,6 +776,7 @@ class MyQuery
         }
 
         $this->errors[] = $message;
+        $this->error = $message; // proxy for last error
 
         return FALSE;
     }
@@ -864,5 +879,15 @@ class MyQuery
         }
 
         return $values;
+    }
+
+
+    function formatSql($query)
+    {
+        if ($this->QueryFormatter) {
+            return SqlFormatter::format($query);
+        }
+
+        return $query;
     }
 }
