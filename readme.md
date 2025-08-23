@@ -53,10 +53,6 @@ $_SQL->table = "users";
 $_SQL->fetchArray();
     
 $result = $_SQL->SelectAll();
-<<<<<<< HEAD
-=======
-
->>>>>>> c8aea43dc8c031fc76f4b16b96c37a1c3eb628cb
 ```
 
 ### Inserting and updating data
