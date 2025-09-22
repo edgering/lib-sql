@@ -452,32 +452,32 @@ class MyQuery
      * 
      */
 
-    function runPDO($query = FALSE, $values = FALSE, $table = FALSE, $command = FALSE)
+    function runPDO($qry = FALSE, $val = FALSE, $table = FALSE, $command = FALSE)
     {
         $this->startTimer();
-        $this->reset(FALSE);
+
+        // -- let prepare values for execution before running the query
+
+        $VALUES = $this->getValues($val);
+        $QUERY = $this->getQuery($qry);
+
+        $this->reset();
 
         if (!$this->isConnected()) {
             return $this->error("Not connected to database.");
         }
 
-        $this->NumRows = 0;
-        $this->last_insert_id = 0;
-        $this->lastInsertId = 0;
-
-        if (empty($this->qry = $this->getQuery($query))) {
+        if (empty($QUERY)) {
             return $this->error("No query set for execution.");
         }
 
-        $this->VALUES = $this->getValues($values);
-
         if (!$command) {
-            $command = $this->getCommand($this->qry);
+            $command = $this->getCommand($QUERY);
         }
 
         try {
 
-            $sth = $this->PDO->prepare($this->qry);
+            $sth = $this->PDO->prepare($QUERY);
 
             if ($sth === false) {
 
@@ -489,7 +489,7 @@ class MyQuery
                 return $this->emptyResult($command);
             }
 
-            $sth->execute($this->VALUES);
+            $sth->execute($VALUES);
 
             $tmp = $sth->errorInfo();
 
@@ -508,7 +508,7 @@ class MyQuery
             return $this->emptyResult($command);
         }
 
-        $this->debug("Query executed in " . $this->stopTimer());
+        $this->debug("Query executed in: " . $this->stopTimer());
 
         $this->NumRows = $sth->rowCount();
 
