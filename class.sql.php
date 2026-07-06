@@ -1,18 +1,19 @@
 <?php
 
-// Include SqlFormatter if available
-
-if (file_exists(__DIR__ . "/SqlFormatter.php")) {
-    require_once __DIR__ . "/SqlFormatter.php";
-}
-
 /**
  *  EDGERING SQL CLASS 
  *
- *  @param DB, SQL, USER, PASS
- *
  *  - set LogDir to FALSE to not create log files
+ * 
+ *  @param string DB
+ *  @param string SQL 
+ *  @param string USER
+ *  @param string PASS
+ *   
  */
+
+require_once __DIR__ . "/class.sql-formatter.php";
+require_once __DIR__ . '/class.sql-sanitized.php';
 
 class MyQuery
 {
@@ -819,13 +820,6 @@ class MyQuery
         $this->echo($this, $hidden);
     }
 
-    /**
-     *  SANITIZE VALUES BY TYPE
-     * 
-     *  - sanitize values for insert or update
-     * 
-     */
-
     function sanitizeInsert($values = array(), $table = false)
     {
         return $this->sanitizeValues($values, TRUE, $table);
@@ -838,51 +832,31 @@ class MyQuery
 
     function sanitizeValues($values = array(), $setEmptyDefault = FALSE, $table = false)
     {
-        if (!$table = $this->getTable($table)) {
+        if (!($table = $this->getTable($table))) {
             return $values;
         }
 
-        foreach ($this->runPDO("SHOW COLUMNS FROM {$table}") as $row) {
-            if (!isset($values[$row->Field])) continue;
-
-            // -- catch function as value
-
-            if (preg_match("/\(\)$/", $values[$row->Field])) {
-                continue;
-            }
-
-            if (
-                preg_match("/(DATE|STAMP)/i", $row->Type)
-                && preg_match("/^(([0-9]{2})\.([0-9]{2})\.([0-9]{4}))/", $values[$row->Field], $m)
-            ) {
-                $datum = sprintf("%s-%s-%s", $m[4], $m[3], $m[2]);
-                $values[$row->Field] = str_replace($m[1], $datum, $values[$row->Field]);
-
-                if (preg_match("/^00/", $values[$row->Field])) {
-                    // -- clean for next step 
-
-                    $values[$row->Field] = '';
-                }
-            }
-
-            // -- handle empty values                    
-
-            if ($values[$row->Field] !== '') continue;
-
-            if ($row->{"Null"} === 'YES') {
-                $values[$row->Field] = NULL;
-            } else if ($row->{"Default"} !== NULL && $row->{"Default"} !== '') {
-                $values[$row->Field] = sprintf('DEFAULT(`%s`)', $row->Field);
-            } else if (preg_match("/INT|BOO|DEC|FLO|DOU/i", $row->Type)) {
-                $values[$row->Field] = 0;
-            }
+        if (!class_exists('MyQuerySanitized', FALSE)) {
+            return $values;
         }
 
-        return $values;
+        $columns = $this->runPDO("SHOW COLUMNS FROM {$table}");
+
+        if (!is_array($columns) || !count($columns)) {
+            return $values;
+        }
+
+        $sanitizer = new MyQuerySanitized();
+
+        if (!method_exists($sanitizer, 'sanitizeValues')) {
+            return $values;
+        }
+
+        return $sanitizer->sanitizeValues($values, $columns, $setEmptyDefault);
     }
 
 
-    function formatSql($query)
+    function formatSql(string $query)
     {
         if ($this->QueryFormatter) {
             return SqlFormatter::format($query);
