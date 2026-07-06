@@ -820,6 +820,10 @@ class MyQuery
         $this->echo($this, $hidden);
     }
 
+    /**
+     *  DATA VALUES SANITIZER
+     */
+
     function sanitizeInsert($values = array(), $table = false)
     {
         return $this->sanitizeValues($values, TRUE, $table);
@@ -855,6 +859,11 @@ class MyQuery
         return $sanitizer->sanitizeValues($values, $columns, $setEmptyDefault);
     }
 
+    /**
+     *  SQL FORMATTER
+     * 
+     *  - format SQL query for better readability
+     */
 
     function formatSql(string $query)
     {
