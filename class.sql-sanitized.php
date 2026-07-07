@@ -241,13 +241,20 @@ class MyQuerySanitized
                 continue;
             }
 
+            $fieldValue = $values[$row->Field];
+
+            // MySQL SET values can come from forms as an array of selected options.
+            if (is_array($fieldValue) && preg_match('/^SET\(/i', $row->Type)) {
+                $fieldValue = implode(',', array_map('strval', $fieldValue));
+            }
+
             // -- catch function as value
 
-            if (preg_match('/\(\)$/', $values[$row->Field])) {
+            if (is_string($fieldValue) && preg_match('/\(\)$/', $fieldValue)) {
                 continue;
             }
 
-            $sanitized = $this->sanitizeTypedFieldValue($values[$row->Field], $row);
+            $sanitized = $this->sanitizeTypedFieldValue($fieldValue, $row);
 
             if ($sanitized !== NULL && preg_match('/DEC|FLO|DOU/i', $row->Type)) {
                 $sanitized = (float)$sanitized;
