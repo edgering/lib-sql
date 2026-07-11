@@ -14,6 +14,7 @@ class MyQueryLite
 
     var $CONNECTED = FALSE;
     var $PDOEXISTS = FALSE;
+    var $TRIED_TO_CONNECT = FALSE;
 
     var $table = FALSE;
 
@@ -35,9 +36,16 @@ class MyQueryLite
 
     var $error = FALSE; // proxy
 
-    function __construct($autoConnect = TRUE)
+    function __construct($autoConnect = FALSE)
     {
-        if ($autoConnect && defined("SQL") && defined("DB") && defined("USER") && defined("PASS")) {
+        if ($autoConnect) {
+            return $this->init();
+        }
+    }
+
+    function init()
+    {
+        if (defined("SQL") && defined("DB") && defined("USER") && defined("PASS")) {
             return $this->connect(SQL, DB, USER, PASS);
         }
 
@@ -75,6 +83,7 @@ class MyQueryLite
         }
 
         $dsn = sprintf('mysql:dbname=%s;host=%s', $DB, $HOST);
+        $this->TRIED_TO_CONNECT = TRUE;
 
         try {
             $this->PDO = new PDO($dsn, $USR, $PWD);
@@ -142,6 +151,10 @@ class MyQueryLite
 
     function isConnected()
     {
+        if (!$this->TRIED_TO_CONNECT) {
+            $this->init();
+        }
+
         return $this->CONNECTED;
     }
 
